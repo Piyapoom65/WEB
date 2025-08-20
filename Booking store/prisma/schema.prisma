@@ -1,0 +1,81 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model products {
+  id          String        @id @default(uuid())
+  created_at  DateTime      @default(now())
+  updated_at  DateTime      @default(now()) @updatedAt
+  deleted_at  DateTime?
+  title       String
+  description String?
+  image       String?
+  price       Float         @default(0)
+  stocks      Int           @default(0)
+  orders      orders[]
+  baskets     baskets[]
+  order_items order_items[]
+}
+
+model orders {
+  id              String   @id @default(uuid())
+  created_at      DateTime @default(now())
+  updated_at      DateTime @default(now()) @updatedAt
+  order_id        String   @unique
+  order_price     Float
+  order_remark    String?
+  order_holder_id String
+
+  user        users         @relation(fields: [order_holder_id], references: [id])
+  products    products?     @relation(fields: [productsId], references: [id])
+  productsId  String?
+  order_items order_items[]
+}
+
+model order_items {
+  id               String   @id @default(uuid())
+  created_at       DateTime @default(now())
+  updated_at       DateTime @default(now()) @updatedAt
+  order_id         String
+  order_product_id String
+  order_price      Float    @default(0)
+  order_units      Int      @default(1)
+  order            orders   @relation(fields: [order_id], references: [id])
+  product          products @relation(fields: [order_product_id], references: [id])
+}
+
+model users {
+  id         String    @id @default(uuid())
+  created_at DateTime  @default(now())
+  updated_at DateTime  @default(now()) @updatedAt
+  user_id    String    @unique
+  role       Role      @default(CUSTOMER)
+  orders     orders[]
+  baskets    baskets[]
+}
+
+model baskets {
+  id         String   @id @default(uuid())
+  created_at DateTime @default(now())
+  updated_at DateTime @default(now()) @updatedAt
+  product_id String
+  user_id    String
+  product    products @relation(fields: [product_id], references: [id])
+  user       users    @relation(fields: [user_id], references: [id])
+}
+
+enum Role {
+  MERCHANT
+  CUSTOMER
+}
